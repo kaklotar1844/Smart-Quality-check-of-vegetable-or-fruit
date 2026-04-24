@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "Check": {
+      "title": "Quality Check",
+      "description": "Result of an AI quality analysis on a product image",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "UID of the user who performed the check" },
+        "imageName": { "type": "string", "description": "Name of the uploaded file" },
+        "quality": { "type": "string", "enum": ["GOOD", "BAD"], "description": "AI predicted quality status" },
+        "score": { "type": "number", "description": "Quality score from 0-100" },
+        "reason": { "type": "string", "description": "AI reason for the quality score" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "When the check was performed" }
+      },
+      "required": ["userId", "quality", "score", "reason", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/checks/{checkId}": {
+      "schema": "Check",
+      "description": "Collection of all quality checks"
+    }
+  }
+}

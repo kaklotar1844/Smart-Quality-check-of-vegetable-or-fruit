@@ -1,0 +1,12 @@
+{
+  "name": "Smart Quality Delivery System",
+  "description": "AI-powered product quality detection system for grocery pickers and managers.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "Vision AI Quality Detection",
+    "Real-time Dashboard",
+    "Mobile-first Picker App"
+  ]
+}

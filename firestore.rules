@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common helpers
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Checks Collection
+    match /checks/{checkId} {
+      function isValidCheck(data) {
+        return data.userId == request.auth.uid &&
+               data.quality in ['GOOD', 'BAD'] &&
+               data.score is number && data.score >= 0 && data.score <= 100 &&
+               data.reason is string && data.reason.size() <= 1000 &&
+               data.imageName is string && data.imageName.size() <= 256 &&
+               data.timestamp == request.time;
+      }
+
+      // Allow creating a new check if user matches userId
+      // and basic schema is valid
+      allow create: if isSignedIn() && 
+                      isValidId(checkId) && 
+                      isValidCheck(request.resource.data) &&
+                      request.resource.data.keys().hasAll(['userId', 'quality', 'score', 'reason', 'timestamp', 'imageName']) &&
+                      request.resource.data.keys().size() == 6;
+
+      // Allow users to list their own checks
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      // Allow user to get their own check
+      allow get: if isOwner(resource.data.userId);
+
+      // Deny update/delete as quality checks should be immutable history
+      allow update, delete: if false;
+    }
+  }
+}

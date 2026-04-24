@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Quality Delivery System</title>
+    <script>
+      // Robust safety trap for read-only 'fetch' and window properties
+      (function() {
+        const nativeFetch = window.fetch.bind(window);
+        let customFetch = null;
+
+        // Use a Proxy for global objects to intercept 'fetch' assignments
+        const trap = new Proxy(window, {
+          get(target, prop) {
+            if (prop === 'fetch') return customFetch || nativeFetch;
+            const val = target[prop];
+            // Bind functions to target to avoid 'Illegal invocation'
+            if (typeof val === 'function') return val.bind(target);
+            return val;
+          },
+          set(target, prop, value) {
+            if (prop === 'fetch') {
+              customFetch = value;
+              return true;
+            }
+            try {
+              target[prop] = value;
+            } catch (e) {
+              // Ignore assignment failures for read-only properties
+            }
+            return true;
+          }
+        });
+
+        // Try to redefine global identifiers to point to our trap
+        ['global', 'globalThis', 'self'].forEach(id => {
+          try {
+            if (id === 'global' || Object.getOwnPropertyDescriptor(window, id)?.configurable) {
+              Object.defineProperty(window, id, {
+                value: trap,
+                configurable: true,
+                writable: true
+              });
+            }
+          } catch (e) {}
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
